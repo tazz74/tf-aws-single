@@ -21,11 +21,11 @@ resource "aws_instance" "Web-server" {
 
   user_data = <<-EOF
   #!/bin/bash
-  yum update -y
-  yum install httpd -y
+  apt -y update
+  apt -y install apache2
+  ufw allow 'Apache'
   echo "<html><h1>webpage 1(I've been provisioned using HasiCorp Terraform!)</h1></html>" > /var/www/html/index.html
-  service httpd start
-  chkconfig httpd on
+  systemctl start apache2
   EOF
   
   tags = {
