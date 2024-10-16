@@ -1,113 +1,48 @@
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "5.71.0"
+    }
+  }
+}
+
 provider "aws" {
-  region = "eu-west-2"
+  region  = "eu-central-1"
 }
 
-data "aws_availability_zones" "all" {}
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.13.0"
 
-variable "server_port" {  
-  description = "The port the server will use for HTTP requests"
-  default = 80
+  name = var.vpc_name
+  cidr = var.vpc_cidr
+
+  azs             = var.vpc_azs
+  private_subnets = var.vpc_private_subnets
+  public_subnets  = var.vpc_public_subnets
+
+  enable_nat_gateway = var.vpc_enable_nat_gateway
+
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+  }
 }
 
-resource "aws_launch_configuration" "example" {
-  image_id               = "ami-c12dcda6"
+module "ec2_instances" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "5.7.1"
+
+  name           = "my-ec2-cluster"
+  instance_count = 2
+
+  ami                    = "ami-0084a47cc718c111a"
   instance_type          = "t2.micro"
-  security_groups = ["${aws_security_group.instance.id}"]
+  vpc_security_group_ids = [module.vpc.default_security_group_id]
+  subnet_id              = module.vpc.public_subnets[0]
 
-  user_data = <<-EOF
-		    #!/bin/bash
-		    sudo yum update -y
-		    sudo yum install httpd -y
-		    sudo service httpd start
-		    sudo chkconfig httpd on
-		    cd /var/www/html
-		    sudo touch index.html
-		    sudo echo "Hello Cloud Management gurus! from " > index.html
-		    sudo hostname -f >> index.html
-		    EOF
-  lifecycle {
-    create_before_destroy = true
+  tags = {
+    Demo   = "true"
+    Environment = "dev"
   }
-}
-
-resource "aws_security_group" "instance" {
-  name = "terraform-example-instance"
-
-  ingress {
-    from_port   = "${var.server_port}"
-    to_port     = "${var.server_port}"
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_autoscaling_group" "example" {
-  launch_configuration = "${aws_launch_configuration.example.id}"
-  availability_zones = ["${data.aws_availability_zones.all.names}"]
-
-  load_balancers    = ["${aws_elb.example.name}"]
-  health_check_type = "ELB"
-
-  min_size = 2
-  max_size = 6
-
-  tag {
-    key                 = "Name"
-    value               = "terraform-asg-example"
-    propagate_at_launch = true
-  }
-}
-
-resource "aws_elb" "example" {
-  name               = "terraform-asg-example"
-  availability_zones = ["${data.aws_availability_zones.all.names}"]
-  security_groups    = ["${aws_security_group.elb.id}"]
-
-  listener {
-    lb_port           = 80
-    lb_protocol       = "http"
-    instance_port     = "${var.server_port}"
-    instance_protocol = "http"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    interval            = 30
-    target              = "HTTP:${var.server_port}/"
-  }
-}
-
-resource "aws_security_group" "elb" {
-  name = "terraform-example-elb"
-
-  ingress {
-    from_port   = 80
-    to_port     = 80   
-    protocol    = "tcp"    
-    cidr_blocks = ["0.0.0.0/0"]  
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  } 
-}
-
-output "elb_dns_name" {  
-  value = "${aws_elb.example.dns_name}"
 }
