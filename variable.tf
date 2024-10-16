@@ -18,8 +18,4 @@ variable "security_group_id" {
   default     = "sg-0e3d71fa803d5f91e"
 }
 
-variable "key_name" {
-  description = "Public key for ssh"
-  type        = string
-  default     = "sg-0e3d71fa803d5f91e"
-}
+
