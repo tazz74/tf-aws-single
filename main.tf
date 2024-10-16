@@ -12,14 +12,14 @@ provider "aws" {
 }
 
 resource "aws_instance" "Web-server" {
-    ami = "ami-0084a47cc718c111a"
-    instance_type = "t2.micro"
+  ami = "ami-0084a47cc718c111a"
+  instance_type = "t2.micro"
+  vpc_id      = aws_vpc.vpc.id
+  subnet_id = aws_subnet.demo_public.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  associate_public_ip_address = true
 
-    subnet_id = aws_subnet.Public.id
-    vpc_security_group_ids = [aws_security_group.web_sg.id]
-    associate_public_ip_address = true
-
-    user_data = <<-EOF
+  user_data = <<-EOF
     #!/bin/bash
     yum update -y
     yum install httpd -y
@@ -27,8 +27,8 @@ resource "aws_instance" "Web-server" {
     service httpd start
     chkconfig httpd on
     EOF
-    tags = {
-      Name = "Web_server"
-    }
+  tags = {
+    Name = "Web_server"
+  }
 }
 
