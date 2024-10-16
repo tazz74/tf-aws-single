@@ -9,6 +9,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-central-1"
+}
 
 resource "aws_instance" "Web-server" {
     ami = "ami-0084a47cc718c111a"
@@ -27,4 +28,4 @@ resource "aws_instance" "Web-server" {
     chkconfig httpd on
     EOF
 }
-}
+
