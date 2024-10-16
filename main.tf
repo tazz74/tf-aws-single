@@ -20,13 +20,14 @@ resource "aws_instance" "Web-server" {
   associate_public_ip_address = true
 
   user_data = <<-EOF
-    #!/bin/bash
-    yum update -y
-    yum install httpd -y
-    echo "<html><h1>webpage 1(I've been provisioned using HasiCorp Terraform!)</h1></html>" > /var/www/html/index.html
-    service httpd start
-    chkconfig httpd on
-    EOF
+  #!/bin/bash
+  yum update -y
+  yum install httpd -y
+  echo "<html><h1>webpage 1(I've been provisioned using HasiCorp Terraform!)</h1></html>" > /var/www/html/index.html
+  service httpd start
+  chkconfig httpd on
+  EOF
+  
   tags = {
     Name = "Web_server"
   }
