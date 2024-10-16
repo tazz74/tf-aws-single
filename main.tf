@@ -15,6 +15,7 @@ resource "aws_instance" "Web-server" {
     ami = "ami-0084a47cc718c111a"
     instance_type = "t2.micro"
 
+    vpc_id = var.vpc_name
     subnet_id = aws_subnet.demo_public.id
     vpc_security_group_ids = [aws_security_group.web_sg.id]
     associate_public_ip_address = true
