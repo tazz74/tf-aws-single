@@ -28,6 +28,5 @@ resource "aws_instance" "Web-server" {
     service httpd start
     chkconfig httpd on
     EOF
-    }
 }
 
