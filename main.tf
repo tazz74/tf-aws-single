@@ -4,45 +4,31 @@
       version = "5.71.0"
     }
   }
-}
 
 provider "aws" {
   region  = "eu-central-1"
 }
 
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "5.13.0"
 
-  name = var.vpc_name
-  cidr = var.vpc_cidr
+resource "aws_instance" "Web-server" {
+    ami = "ami-0084a47cc718c111a"
+    instance_type = "t2.micro"
 
-  azs             = var.vpc_azs
-  private_subnets = var.vpc_private_subnets
-  public_subnets  = var.vpc_public_subnets
+    subnet_id = aws_subnet.my_public_subnet.id
+    vpc_security_group_ids = [aws_security_group.web_sg.id]
+    associate_public_ip_address = true
 
-  enable_nat_gateway = var.vpc_enable_nat_gateway
+    user_data = <<-EOF
+    #!/bin/bash
+    yum update -y
+    yum install httpd -y
+    echo "<html><h1>webpage 1(I've been provisioned using HasiCorp Terraform!)</h1></html>" > /var/www/html/index.html
+    service httpd start
+    chkconfig httpd on
+    EOF
 
-  tags = {
-    Terraform   = "true"
-    Environment = "dev"
-  }
+    tags = {
+        "Name": "Demo
+    }
 }
 
-module "ec2_instances" {
-  source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "5.7.1"
-
-  name           = "my-ec2-cluster"
-  instance_count = 2
-
-  ami                    = "ami-0084a47cc718c111a"
-  instance_type          = "t2.micro"
-  vpc_security_group_ids = [module.vpc.default_security_group_id]
-  subnet_id              = module.vpc.public_subnets[0]
-
-  tags = {
-    Demo   = "true"
-    Environment = "dev"
-  }
-}
