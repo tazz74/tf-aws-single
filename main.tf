@@ -29,7 +29,7 @@ resource "aws_instance" "Web-server" {
   EOF
   
   tags = {
-    Name = "Web_server"
+    Name = "WebServer"
   }
 }
 
